@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>AI Run Coach</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body{
+font-family:Arial;
+background:#f4f6f8;
+padding:40px;
+}
+
+.container{
+max-width:800px;
+margin:auto;
+background:white;
+padding:30px;
+border-radius:10px;
+box-shadow:0 5px 20px rgba(0,0,0,0.1);
+}
+
+h1{
+text-align:center;
+}
+
+input{
+padding:10px;
+margin:5px;
+}
+
+button{
+padding:10px 20px;
+background:black;
+color:white;
+border:none;
+cursor:pointer;
+}
+
+canvas{
+margin-top:30px;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>AI Run Coach</h1>
+
+<h3>添加跑步记录</h3>
+
+<input id="distance" placeholder="公里">
+<input id="duration" placeholder="分钟">
+
+<button onclick="addRun()">记录</button>
+
+<canvas id="chart"></canvas>
+
+<h3>AI训练计划</h3>
+
+<ul id="plan"></ul>
+
+</div>
+
+<script>
+
+async function addRun(){
+
+let distance=document.getElementById("distance").value
+let duration=document.getElementById("duration").value
+
+await fetch("/api/run",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+date:new Date().toISOString(),
+distance,
+duration
+})
+})
+
+loadRuns()
+
+}
+
+async function loadRuns(){
+
+let res=await fetch("/api/runs")
+let data=await res.json()
+
+let labels=data.map(r=>r.date.slice(0,10))
+let km=data.map(r=>r.distance)
+
+new Chart(document.getElementById("chart"),{
+type:"line",
+data:{
+labels:labels,
+datasets:[{
+label:"跑量 km",
+data:km
+}]
+}
+})
+
+}
+
+async function loadPlan(){
+
+let res=await fetch("/api/plan")
+let data=await res.json()
+
+let ul=document.getElementById("plan")
+
+data.forEach(p=>{
+let li=document.createElement("li")
+li.innerText=p.day+" : "+p.training
+ul.appendChild(li)
+})
+
+}
+
+loadRuns()
+loadPlan()
+
+</script>
+
+</body>
+</html>
